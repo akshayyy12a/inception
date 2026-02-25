@@ -1,15 +1,17 @@
-FROM debian:bookworm
+FROM debian:bullseye
 
-RUN apt-get update && apt-get install -y nginx openssl
+RUN apt-get update && apt-get upgrade -y && apt-get install -y nginx openssl
+
+RUN mkdir -p /etc/nginx/ssl
+
+# cree le certif auto signe pour le https
+RUN openssl req -x509 -nodes -out /etc/nginx/ssl/inception.crt -keyout \
+	/etc/nginx/ssl/inception.key -subj "/C=FR/O=42/OU=42/CN=shessoun.42.fr/UID=shessounAdmin"
 
 COPY config.conf /etc/nginx/nginx.conf
 
-# cree le certif auto signe pour le https
-RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-	-keyout /etc/ssl/private/nginx.key \
-	-out /etc/ssl/certs/nginx.crt \
-	-subj "/CN=shessoun.42.fr"
+RUN mkdir -p /var/www/wordpress
 
-EXPOSE 443
+RUN chown -R www-data:www-data /var/www/wordpress
 
 CMD ["nginx", "-g", "daemon off;"]

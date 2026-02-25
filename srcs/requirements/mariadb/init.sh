@@ -1,17 +1,13 @@
 #!/bin/bash
 
-mysql_install_db --user=mysql --datadir=/var/lib/mysql
-mysqld --user=mysql &
+service mariadb start
+sleep 5
 
-while ! mysqladmin ping --silent; do
-	sleep 1
-done
+mariadb -e "CREATE DATABASE IF NOT EXISTS \`${MYSQL_DB}\`;"
+mariadb -e "CREATE USER IF NOT EXISTS \`${MYSQL_USER}\`@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';"
+mariadb -e "GRANT ALL PRIVILEGES ON ${MYSQL_DB}.* TO \`${MYSQL_USER}\`@'%';"
+mariadb -e "FLUSH PRIVILEGES;
 
-mysql -e "CREATE DATABASE IF NOT EXISTS $DB_NAME;"
-mysql -e "CREATE USER IF NOT EXISTS '$DB_USER'@'%' IDENTIFIED BY '$DB_PASSWORD';"
-mysql -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%';"
-mysql -e "FLUSH PRIVILEGES;"
+mysqladmin -u root -p$MYSQL_ROOT_PASSWORD shutdown
 
-mysqladmin shutdown
-
-exec mysqld --user=mysql
+mysqld_safe --port=3306 --bind-address=0.0.0.0 --datadir='/var/lib/mysql'
